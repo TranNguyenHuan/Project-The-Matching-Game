@@ -2,6 +2,11 @@
 #include <string>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
+#include <string>
+#include <fstream>      
+#include <vector>
+#include <algorithm>    /* std::sort */
+
 using namespace std;
 struct vertical{
     string Line1, Line2, Line3, Line4;
@@ -44,6 +49,84 @@ void printBoard(cell Board[][8]);
 //void checkEndGame(); // kiểm tra có còn cặp nào không
 
 //void countTime(); // đếm thời gian hoàn thành bàn chơi
+//check valid name
+
+
+bool isValidName(string name) {
+    if (name.length() < 3) {
+        return false;
+    }
+    for (int i = 0; i < name.length(); i++) {
+        if (name[i] < 'A' || name[i] > 'Z') {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+
+
+void makeLeaderboard(string maze_name, string formated_time) {
+    string winner_name, filename = maze_name.substr(0,7) + "_WINNERS.txt";
+
+    while(true) {
+        
+        if(ifstream(filename)) {   // If MAZE_XX_WINNERS.txt file exists
+            fstream leaderboard(filename, fstream :: app);
+            cout << "Enter your name (max 15 characters): ";
+            if(isValidName(winner_name) && winner_name.length() <= 15) {  // If name is valid
+                string line;
+                vector<string> lb_entries;
+                int n_line = 0;
+                leaderboard << formated_time << " - " << winner_name << endl; // Append to the end of the file
+                // Store all leaderboard entries in a vector
+                while(!leaderboard.eof()) {  
+                    if(n_line >= 2) {
+                        getline(leaderboard, line);
+                        lb_entries.push_back(line);
+                    }
+                    n_line++;
+                }
+                leaderboard.close();
+                sort(lb_entries.begin(), lb_entries.end());//sort the leaderboard entries first by name, then by time
+                // Check if leaderboard has more than 10 entries to delete those past the limit
+                if(lb_entries.size() > 10) {  
+                    lb_entries.erase(lb_entries.begin() + 9, lb_entries.end()); // Truncates the vector from the 10th position forward
+                }
+                leaderboard.open(filename, fstream :: trunc);   // Reopens the file in truncation mode to delete pre-existing leaderboard
+                leaderboard << "|    TIME    -    NAME   |" << endl;
+                leaderboard << "--------------------------" << endl;
+                // Updates leaderboard
+                for(string entry : lb_entries) { 
+                    leaderboard << entry << endl;
+                }
+                leaderboard.close();
+                break;
+            }
+            // If name not valid
+            else if (isValidName(winner_name) && winner_name.length() > 15) {
+                cerr << endl << "Name has more than 15 characters! Please retry." << endl;
+            }
+            else {
+                cerr << endl << "Not a valid name input!" << endl << endl;
+            }
+    }
+    // If file doesn't exist
+    else {
+        cout << "Creating leaderboard ..." << endl;
+        ofstream leaderboard(filename);
+        if (!leaderboard) {
+            cerr << "File could not be created!" << endl;
+        }
+        else {
+            leaderboard << "|    TIME    -    NAME   |" << endl;
+            leaderboard << "--------------------------" << endl;
+            leaderboard.close();
+        }
+    }
+    }
+}
 
 int main()
 {
